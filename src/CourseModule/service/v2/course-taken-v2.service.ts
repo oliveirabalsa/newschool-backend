@@ -282,7 +282,11 @@ export class CourseTakenV2Service {
     const lessons = this.lessonService.getAll(courseId);
     const tests = this.testService.getAll(currentPartId);
 
-    const [courseParts, courseLessons, partTests] = await Promise.all([parts, lessons, tests]);
+    const [courseParts, courseLessons, partTests] = await Promise.all([
+      parts,
+      lessons,
+      tests,
+    ]);
 
     if (
       !courseTaken.challenge &&
@@ -337,16 +341,14 @@ export class CourseTakenV2Service {
     // const previousLesson = part.aula.ordem !== 1 ? this.getPreviousLesson(part.aula.ordem, courseLessons) : "null"
 
     const previousTest =
-    test.ordem !== 1
-      ? this.getPreviousTest(test.ordem, partTests)
-      : 'null';
+      test.ordem !== 1 ? this.getPreviousTest(test.ordem, partTests) : 'null';
 
     const { alternativa_certa: rightAlternative, ...rest } = test;
     return {
       doing: CurrentStepDoingEnum.TEST,
       test: rest,
       previousPart,
-      previousTest
+      previousTest,
     };
   }
 
@@ -438,9 +440,7 @@ export class CourseTakenV2Service {
   }
 
   private getPreviousTest(ordem, partTests) {
-    const previousPart = partTests.find(
-      (part) => part.ordem === ordem - 1,
-    );
+    const previousPart = partTests.find((part) => part.ordem === ordem - 1);
     return previousPart;
   }
 }

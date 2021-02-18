@@ -1,3 +1,5 @@
+import { Test } from '@nestjs/testing';
+import { CMSLessonDTO } from './cms-lesson.dto';
 import { CMSPartDTO } from './cms-part.dto';
 import { CMSTestDTO } from './cms-test.dto';
 
@@ -12,10 +14,7 @@ export class CurrentStepDTO {
   doing: CurrentStepDoingEnum;
   part?: CMSPartDTO;
   test?: Omit<CMSTestDTO, 'alternativa_certa'>;
-  courseParts?: any;
-  courseLessons?: any;
-  previousPart?: any;
-  previousLesson?: any;
-  previousTest?: any;
-
+  previousPart?: CMSPartDTO;
+  previousLesson?: CMSLessonDTO;
+  previousTest?: CMSTestDTO;
 }
