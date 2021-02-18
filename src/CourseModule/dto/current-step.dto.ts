@@ -12,4 +12,10 @@ export class CurrentStepDTO {
   doing: CurrentStepDoingEnum;
   part?: CMSPartDTO;
   test?: Omit<CMSTestDTO, 'alternativa_certa'>;
+  courseParts?: any;
+  courseLessons?: any;
+  previousPart?: any;
+  previousLesson?: any;
+  previousTest?: any;
+
 }

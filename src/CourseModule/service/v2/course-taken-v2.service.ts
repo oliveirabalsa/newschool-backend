@@ -24,6 +24,9 @@ import { ChallengeDTO } from '../../../GameficationModule/dto/challenge.dto';
 import { Pageable, PageableDTO } from '../../../CommonsModule/dto/pageable.dto';
 import { UserMapper } from '../../../UserModule/mapper/user.mapper';
 import { CourseTakenDTO } from '../../dto/course-taken.dto';
+import { PartV2Service } from './part-v2.service';
+import { LessonV2Service } from './lesson-v2.service';
+import { TestV2Service } from './test-v2.service';
 
 @Injectable()
 export class CourseTakenV2Service {
@@ -33,6 +36,9 @@ export class CourseTakenV2Service {
     private readonly cmsIntegration: CmsIntegration,
     private readonly repository: CourseTakenRepository,
     private readonly publisherService: PublisherService,
+    private readonly partService: PartV2Service,
+    private readonly lessonService: LessonV2Service,
+    private readonly testService: TestV2Service,
     private readonly userMapper: UserMapper,
   ) {}
 
@@ -270,6 +276,13 @@ export class CourseTakenV2Service {
     courseId: number,
   ): Promise<CurrentStepDTO> {
     const courseTaken = await this.findByUserIdAndCourseId(userId, courseId);
+    const { currentLessonId, currentPartId } = courseTaken;
+
+    const parts = this.partService.getAll(currentLessonId);
+    const lessons = this.lessonService.getAll(courseId);
+    const tests = this.testService.getAll(currentPartId);
+
+    const [courseParts, courseLessons, partTests] = await Promise.all([parts, lessons, tests]);
 
     if (
       !courseTaken.challenge &&
@@ -295,9 +308,20 @@ export class CourseTakenV2Service {
       const { data: part } = await this.cmsIntegration.findPartById(
         courseTaken.currentPartId,
       );
+      const previousPart =
+        part.ordem !== 1
+          ? this.getPreviousPart(part.ordem, courseParts)
+          : 'null';
+      const previousLesson =
+        part.aula.ordem !== 1
+          ? this.getPreviousLesson(part.aula.ordem, courseLessons)
+          : 'null';
+
       return {
         doing: CurrentStepDoingEnum.PART,
         part,
+        previousPart,
+        previousLesson,
       };
     }
     const {
@@ -305,10 +329,24 @@ export class CourseTakenV2Service {
     }: AxiosResponse<CMSTestDTO> = await this.cmsIntegration.findTestById(
       courseTaken.currentTestId,
     );
+
+    const previousPart =
+      test.parte.ordem !== 1
+        ? this.getPreviousPart(test.parte.ordem, courseParts)
+        : 'null';
+    // const previousLesson = part.aula.ordem !== 1 ? this.getPreviousLesson(part.aula.ordem, courseLessons) : "null"
+
+    const previousTest =
+    test.ordem !== 1
+      ? this.getPreviousTest(test.ordem, partTests)
+      : 'null';
+
     const { alternativa_certa: rightAlternative, ...rest } = test;
     return {
       doing: CurrentStepDoingEnum.TEST,
       test: rest,
+      previousPart,
+      previousTest
     };
   }
 
@@ -385,5 +423,24 @@ export class CourseTakenV2Service {
     completion += percentualPerTest * currentTestSequenceNumber;
 
     return completion > 100 ? 100 : completion;
+  }
+
+  private getPreviousPart(ordem, courseParts) {
+    const previousPart = courseParts.find((part) => part.ordem === ordem - 1);
+    return previousPart;
+  }
+
+  private getPreviousLesson(ordem, courseLessons) {
+    const previousPart = courseLessons.find(
+      (lesson) => lesson.ordem === ordem - 1,
+    );
+    return previousPart;
+  }
+
+  private getPreviousTest(ordem, partTests) {
+    const previousPart = partTests.find(
+      (part) => part.ordem === ordem - 1,
+    );
+    return previousPart;
   }
 }
